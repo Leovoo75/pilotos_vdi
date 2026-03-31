@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Parapente Finance - Gestão Financeira</title>
+    
+    <!-- Bibliotecas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a472a 0%, #2a5a3a 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0f2b1a 0%, #1e3a2a 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-info button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 0;
+        }
+
+        .user-info button:hover {
+            text-decoration: underline;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        .sync-status {
+            text-align: center;
+            font-size: 0.6rem;
+            margin-top: 5px;
+            color: #a5d6a5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 80px;
+            z-index: 99;
+        }
+
+        .tab-btn {
+            background: #e8f0e8;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1a472a;
+            font-size: 0.9rem;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .tab-btn.active {
+            background: #1a472a;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e0e8e0;
+        }
+
+        .card h3 {
+            color: #1a472a;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #1a472a;
+            padding-left: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c5a3a;
+        }
+
+        input, select, textarea {
+            padding: 10px 12px;
+            border: 1px solid #c0d0c0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1a472a;
+            box-shadow: 0 0 0 3px rgba(26,71,42,0.1);
+        }
+
+        button {
+            background: #1a472a;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            min-height: 44px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #2a5a3a;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-success { background: #27ae60; }
+        .btn-danger { background: #c0392b; }
+        .btn-info { background: #2980b9; }
+        .btn-warning { background: #f39c12; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #1a472a, #2e6b3e);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card i {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            font-size: 2.5rem;
+            opacity: 0.2;
+        }
+
+        .stat-card h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #e0e8e0;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f5f0;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-receita { background: #d4edda; color: #155724; }
+        .badge-despesa { background: #f8d7da; color: #721c24; }
+        .badge-piloto { background: #cce5ff; color: #004085; }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+
+        .filter-item {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .chart-container {
+            max-height: 300px;
+            margin: 20px 0;
+        }
+
+        canvas {
+            max-height: 250px;
+            width: 100%;
+        }
+
+        #authOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f2b1a, #1e3a2a);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .auth-box {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            min-width: 320px;
+        }
+
+        .auth-box input, .auth-box select {
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .auth-box button {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            z-index: 1000;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .total-soma {
+            background: #f0f5f0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .filter-bar {
+                flex-direction: column;
+            }
+            .filter-item {
+                width: 100%;
+            }
+            .tab-btn {
+                padding: 8px 12px;
+                font-size: 0.75rem;
+            }
+            .user-info {
+                position: relative;
+                top: 0;
+                right: 0;
+                justify-content: center;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="authOverlay">
+    <div class="auth-box">
+        <i class="fas fa-parachute-box" style="font-size: 3rem; margin-bottom: 15px;"></i>
+        <h2>Parapente Finance</h2>
+        <p>Gestão Financeira para Pilotos</p>
+        <select id="userType">
+            <option value="admin">Administrador</option>
+            <option value="pilot">Piloto</option>
+        </select>
+        <input type="password" id="pinInput" placeholder="Digite a senha" autocomplete="off">
+        <button onclick="login()"><i class="fas fa-lock"></i> Acessar Sistema</button>
+    </div>
+</div>
+
+<div id="mainApp" style="display: none;">
+    <div class="header">
+        <h1><i class="fas fa-parachute-box"></i> Parapente Finance</h1>
+        <div class="user-info">
+            <i class="fas fa-user-circle"></i> <span id="userName">Carregando...</span>
+            <button onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sair</button>
+        </div>
+        <div class="subtitle">Controle Financeiro do Grupo de Pilotos</div>
+        <div class="sync-status" id="syncStatus"><i class="fas fa-check-circle"></i> Sistema Pronto</div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+            <button class="tab-btn" data-tab="pilots" id="tabPilots"><i class="fas fa-users"></i> Pilotos</button>
+            <button class="tab-btn" data-tab="transactions"><i class="fas fa-exchange-alt"></i> Lançamentos</button>
+            <button class="tab-btn" data-tab="reports"><i class="fas fa-chart-line"></i> Relatórios</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>Receitas Totais</h4>
+                    <div class="value" id="totalRevenue">R$ 0,00</div>
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="stat-card">
+                    <h4>Despesas Totais</h4>
+                    <div class="value" id="totalExpense">R$ 0,00</div>
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="stat-card">
+                    <h4>Saldo Total</h4>
+                    <div class="value" id="totalBalance">R$ 0,00</div>
+                    <i class="fas fa-wallet"></i>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-chart-line"></i> Análise Mensal</h3>
+                <div class="filter-bar">
+                    <div class="filter-item">
+                        <label>Ano</label>
+                        <select id="yearFilter" onchange="updateDashboard()">
+                            <option value="2024">2024</option>
+                            <option value="2025" selected>2025</option>
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label>Piloto</label>
+                        <select id="dashboardPilotFilter" onchange="updateDashboard()">
+                            <option value="all">Todos os Pilotos</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <button onclick="updateDashboard()" class="btn-info">Atualizar</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-clock"></i> Últimos Lançamentos</h3>
+                <div class="table-container">
+                    <table id="recentTable">
+                        <thead>
+                            58<th>Data</th><th>Piloto</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Tipo</th>
+                        </thead>
+                        <tbody></tbody>
+                     </div>
+            </div>
+        </div>
+
+        <!-- Pilots Tab -->
+        <div id="pilots" class="tab-content">
+            <div class="card" id="pilotsAddCard">
+                <h3><i class="fas fa-user-plus"></i> Novo Piloto</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>Nome Completo</label><input type="text" id="pilotName" placeholder="Ex: João Silva"></div>
+                    <div class="form-group"><label>CPF</label><input type="text" id="pilotCpf" placeholder="000.000.000-00"></div>
+                    <div class="form-group"><label>Telefone</label><input type="text" id="pilotPhone" placeholder="(11) 99999-9999"></div>
+                    <div class="form-group"><label>E-mail</label><input type="email" id="pilotEmail" placeholder="piloto@email.com"></div>
+                </div>
+                <button onclick="addPilot()" class="btn-success" id="addPilotBtn"><i class="fas fa-save"></i> Cadastrar Piloto</button>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-users"></i> Lista de Pilotos</h3>
+                <div class="table-container">
+                    <table id="pilotsTable">
+                        <thead>
+                            58<th>Nome</th><th>CPF</th><th>Telefone</th><th>E-mail</th><th>Status</th><th id="pilotsActionsHeader">Ações</th>
+                        </thead>
+                        <tbody></tbody>
+                     </div>
+                <div id="pilotsCount" style="text-align: right; margin-top: 10px; font-size: 0.7rem; color: #666;"></div>
+            </div>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div id="transactions" class="tab-content">
+            <div class="card" id="transactionAddCard">
+                <h3><i class="fas fa-plus-circle"></i> Novo Lançamento</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>Data</label><input type="date" id="txDate"></div>
+                    <div class="form-group"><label>Piloto</label><select id="txPilot"></select></div>
+                    <div class="form-group"><label>Descrição</label><input type="text" id="txDesc" placeholder="Ex: Inscrição Campeonato"></div>
+                    <div class="form-group"><label>Categoria</label><select id="txCategory"><option>Mensalidade</option><option>Inscrição</option><option>Equipamento</option><option>Manutenção</option><option>Viagem</option><option>Outros</option></select></div>
+                    <div class="form-group"><label>Tipo</label><select id="txType"><option value="RECEITA">Receita (Entrada)</option><option value="DESPESA">Despesa (Saída)</option></select></div>
+                    <div class="form-group"><label>Valor R$</label><input type="number" id="txValue" step="0.01" placeholder="0,00"></div>
+                </div>
+                <button onclick="saveTransaction()" class="btn-success" id="saveTransactionBtn"><i class="fas fa-save"></i> SALVAR LANÇAMENTO</button>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-filter"></i> Filtros</h3>
+                <div class="filter-bar">
+                    <div class="filter-item"><label>Data Início</label><input type="date" id="filterStart"></div>
+                    <div class="filter-item"><label>Data Fim</label><input type="date" id="filterEnd"></div>
+                    <div class="filter-item"><label>Piloto</label><select id="filterPilot"><option value="">Todos</option></select></div>
+                    <div class="filter-item"><label>Tipo</label><select id="filterType"><option value="">Todos</option><option value="RECEITA">Receitas</option><option value="DESPESA">Despesas</option></select></div>
+                    <div class="filter-item"><label>Categoria</label><select id="filterCategory"><option value="">Todas</option><option>Mensalidade</option><option>Inscrição</option><option>Equipamento</option><option>Manutenção</option><option>Viagem</option><option>Outros</option></select></div>
+                    <div class="filter-item"><button onclick="applyFilters()"><i class="fas fa-search"></i> Filtrar</button><button onclick="clearFilters()"><i class="fas fa-undo"></i> Limpar</button></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Lista de Lançamentos</h3>
+                <div class="table-container">
+                    <table id="transTable">
+                        <thead>
+                            58<th>Data</th><th>Piloto</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Tipo</th><th id="transActionsHeader">Ações</th>
+                        </thead>
+                        <tbody></tbody>
+                     </div>
+                <div id="totalFiltrado" class="total-soma">💰 Saldo Total: R$ 0,00</div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports" class="tab-content">
+            <div class="card">
+                <h3><i class="fas fa-chart-pie"></i> Relatórios Financeiros</h3>
+                <div class="filter-bar">
+                    <div class="filter-item"><label>Data Início</label><input type="date" id="reportStart"></div>
+                    <div class="filter-item"><label>Data Fim</label><input type="date" id="reportEnd"></div>
+                    <div class="filter-item"><label>Piloto</label><select id="reportPilot"><option value="all">Todos os Pilotos</option></select></div>
+                    <div class="filter-item">
+                        <button onclick="exportToExcel()" class="btn-info"><i class="fas fa-file-excel"></i> Excel</button>
+                        <button onclick="exportToJSON()" class="btn-warning"><i class="fas fa-code"></i> JSON</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-chart-bar"></i> Despesas por Categoria</h3>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Piloto -->
+<div id="editPilotModal" class="modal">
+    <div class="modal-content">
+        <h3>Editar Piloto</h3>
+        <div class="form-group"><label>Nome</label><input type="text" id="editName"></div>
+        <div class="form-group"><label>CPF</label><input type="text" id="editCpf"></div>
+        <div class="form-group"><label>Telefone</label><input type="text" id="editPhone"></div>
+        <div class="form-group"><label>E-mail</label><input type="email" id="editEmail"></div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;"><button onclick="saveEditPilot()" class="btn-success">Salvar</button><button onclick="closeEditPilotModal()" class="btn-danger">Cancelar</button></div>
+    </div>
+</div>
+
+<!-- Modal Editar Lançamento -->
+<div id="editTransactionModal" class="modal">
+    <div class="modal-content">
+        <h3>Editar Lançamento</h3>
+        <div class="form-group"><label>Data</label><input type="date" id="editDate"></div>
+        <div class="form-group"><label>Piloto</label><select id="editPilot"></select></div>
+        <div class="form-group"><label>Descrição</label><input type="text" id="editDesc"></div>
+        <div class="form-group"><label>Categoria</label><select id="editCategory"><option>Mensalidade</option><option>Inscrição</option><option>Equipamento</option><option>Manutenção</option><option>Viagem</option><option>Outros</option></select></div>
+        <div class="form-group"><label>Tipo</label><select id="editType"><option value="RECEITA">Receita</option><option value="DESPESA">Despesa</option></select></div>
+        <div class="form-group"><label>Valor R$</label><input type="number" id="editValue" step="0.01"></div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;"><button onclick="saveEditTransaction()" class="btn-success">Salvar</button><button onclick="closeEditTransactionModal()" class="btn-danger">Cancelar</button></div>
+    </div>
+</div>
+
+<script>
+    // Configuração de usuários - SENHAS NÃO SÃO EXIBIDAS EM NENHUM LUGAR
+    const USERS = {
+        admin: { password: "1234", name: "Administrador", role: "admin" },
+        pilot: { password: "5678", name: "Piloto", role: "pilot" }
+    };
+    
+    let currentUser = null;
+    let pilots = [];
+    let transactions = [];
+    let currentEditPilotId = null;
+    let currentEditTransactionId = null;
+    let monthlyChart = null;
+    let categoryChart = null;
+
+    // ==================== AUTENTICAÇÃO ====================
+    function login() {
+        const userType = document.getElementById("userType").value;
+        const password = document.getElementById("pinInput").value;
+        
+        if (USERS[userType] && USERS[userType].password === password) {
+            currentUser = USERS[userType];
+            document.getElementById("authOverlay").style.display = "none";
+            document.getElementById("mainApp").style.display = "block";
+            document.getElementById("userName").innerHTML = currentUser.name;
+            applyPermissions();
+            loadData();
+        } else {
+            alert("Senha incorreta! Tente novamente.");
+            document.getElementById("pinInput").value = "";
+            document.getElementById("pinInput").focus();
+        }
+    }
+    
+    function logout() {
+        currentUser = null;
+        document.getElementById("authOverlay").style.display = "flex";
+        document.getElementById("mainApp").style.display = "none";
+        document.getElementById("pinInput").value = "";
+        document.getElementById("userType").value = "admin";
+    }
+    
+    function applyPermissions() {
+        const isAdmin = currentUser && currentUser.role === "admin";
+        
+        const pilotsAddCard = document.getElementById("pilotsAddCard");
+        const addPilotBtn = document.getElementById("addPilotBtn");
+        const pilotsActionsHeader = document.getElementById("pilotsActionsHeader");
+        const transactionAddCard = document.getElementById("transactionAddCard");
+        const saveTransactionBtn = document.getElementById("saveTransactionBtn");
+        const transActionsHeader = document.getElementById("transActionsHeader");
+        
+        if (pilotsAddCard) pilotsAddCard.style.display = isAdmin ? "block" : "none";
+        if (addPilotBtn) addPilotBtn.disabled = !isAdmin;
+        if (pilotsActionsHeader) pilotsActionsHeader.style.display = isAdmin ? "table-cell" : "none";
+        if (transactionAddCard) transactionAddCard.style.display = isAdmin ? "block" : "none";
+        if (saveTransactionBtn) saveTransactionBtn.disabled = !isAdmin;
+        if (transActionsHeader) transActionsHeader.style.display = isAdmin ? "table-cell" : "none";
+    }
+
+    // ==================== CARREGAR DADOS ====================
+    function loadData() {
+        const storedPilots = localStorage.getItem("parapente_pilots");
+        if (storedPilots) {
+            pilots = JSON.parse(storedPilots);
+        } else {
+            pilots = [
+                { id: "1", name: "João Silva", cpf: "123.456.789-00", phone: "(11) 99999-1111", email: "joao@email.com", active: true },
+                { id: "2", name: "Maria Santos", cpf: "987.654.321-00", phone: "(11) 99999-2222", email: "maria@email.com", active: true },
+                { id: "3", name: "Pedro Costa", cpf: "456.789.123-00", phone: "(11) 99999-3333", email: "pedro@email.com", active: true }
+            ];
+            savePilots();
+        }
+
+        const storedTransactions = localStorage.getItem("parapente_transactions");
+        if (storedTransactions) {
+            transactions = JSON.parse(storedTransactions);
+        } else {
+            transactions = [
+                { id: "1", date: "2025-01-15", pilotId: "1", description: "Mensalidade Janeiro", category: "Mensalidade", type: "DESPESA", value: 150.00 },
+                { id: "2", date: "2025-01-20", pilotId: "2", description: "Inscrição Campeonato", category: "Inscrição", type: "DESPESA", value: 200.00 },
+                { id: "3", date: "2025-02-10", pilotId: "1", description: "Mensalidade Fevereiro", category: "Mensalidade", type: "DESPESA", value: 150.00 },
+                { id: "4", date: "2025-02-15", pilotId: "3", description: "Compra de Equipamento", category: "Equipamento", type: "DESPESA", value: 850.00 },
+                { id: "5", date: "2025-02-20", pilotId: "all", description: "Patrocínio", category: "Outros", type: "RECEITA", value: 500.00 },
+                { id: "6", date: "2025-03-01", pilotId: "1", description: "Mensalidade Março", category: "Mensalidade", type: "DESPESA", value: 150.00 },
+                { id: "7", date: "2025-03-05", pilotId: "2", description: "Mensalidade Março", category: "Mensalidade", type: "DESPESA", value: 150.00 },
+                { id: "8", date: "2025-03-10", pilotId: "3", description: "Manutenção Equipamento", category: "Manutenção", type: "DESPESA", value: 300.00 }
+            ];
+            saveTransactions();
+        }
+
+        renderPilots();
+        renderPilotSelects();
+        renderTransactions();
+        updateDashboard();
+        updateCategoryChart();
+        
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0,10);
+        const lastDay = today.toISOString().slice(0,10);
+        document.getElementById("txDate").valueAsDate = today;
+        document.getElementById("filterStart").value = firstDay;
+        document.getElementById("filterEnd").value = lastDay;
+        document.getElementById("reportStart").value = firstDay;
+        document.getElementById("reportEnd").value = lastDay;
+        
+        document.getElementById("syncStatus").innerHTML = '<i class="fas fa-check-circle"></i> Dados carregados';
+    }
+
+    function savePilots() { localStorage.setItem("parapente_pilots", JSON.stringify(pilots)); }
+    function saveTransactions() { localStorage.setItem("parapente_transactions", JSON.stringify(transactions)); }
+
+    // ==================== PILOTOS ====================
+    function renderPilots() {
+        const tbody = document.querySelector("#pilotsTable tbody");
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        const isAdmin = currentUser && currentUser.role === "admin";
+        
+        pilots.forEach(pilot => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerHTML = pilot.name;
+            row.insertCell(1).innerHTML = pilot.cpf || '-';
+            row.insertCell(2).innerHTML = pilot.phone || '-';
+            row.insertCell(3).innerHTML = pilot.email || '-';
+            row.insertCell(4).innerHTML = `<span class="badge badge-piloto">Ativo</span>`;
+            
+            if (isAdmin) {
+                row.insertCell(5).innerHTML = `
+                    <button onclick="openEditPilotModal('${pilot.id}')" class="btn-warning" style="padding:5px 10px; margin-right:5px;"><i class="fas fa-edit"></i></button>
+                    <button onclick="deletePilot('${pilot.id}')" class="btn-danger" style="padding:5px 10px;"><i class="fas fa-trash"></i></button>
+                `;
+            } else {
+                row.insertCell(5).innerHTML = '-';
+            }
+        });
+        
+        document.getElementById("pilotsCount").innerHTML = `Total: ${pilots.length} pilotos cadastrados`;
+    }
+
+    function addPilot() {
+        if (currentUser.role !== "admin") { alert("Apenas administradores podem adicionar pilotos!"); return; }
+        
+        const name = document.getElementById("pilotName").value.trim();
+        if (!name) { alert("Informe o nome do piloto!"); return; }
+        
+        const newPilot = {
+            id: Date.now().toString(),
+            name: name,
+            cpf: document.getElementById("pilotCpf").value.trim(),
+            phone: document.getElementById("pilotPhone").value.trim(),
+            email: document.getElementById("pilotEmail").value.trim(),
+            active: true
+        };
+        
+        pilots.push(newPilot);
+        savePilots();
+        renderPilots();
+        renderPilotSelects();
+        
+        document.getElementById("pilotName").value = "";
+        document.getElementById("pilotCpf").value = "";
+        document.getElementById("pilotPhone").value = "";
+        document.getElementById("pilotEmail").value = "";
+        
+        showToast("Piloto cadastrado com sucesso!");
+    }
+
+    function openEditPilotModal(id) {
+        const pilot = pilots.find(p => p.id === id);
+        if (!pilot) return;
+        currentEditPilotId = id;
+        document.getElementById("editName").value = pilot.name;
+        document.getElementById("editCpf").value = pilot.cpf || '';
+        document.getElementById("editPhone").value = pilot.phone || '';
+        document.getElementById("editEmail").value = pilot.email || '';
+        document.getElementById("editPilotModal").style.display = "flex";
+    }
+
+    function closeEditPilotModal() { document.getElementById("editPilotModal").style.display = "none"; currentEditPilotId = null; }
+
+    function saveEditPilot() {
+        const pilot = pilots.find(p => p.id === currentEditPilotId);
+        if (pilot) {
+            pilot.name = document.getElementById("editName").value;
+            pilot.cpf = document.getElementById("editCpf").value;
+            pilot.phone = document.getElementById("editPhone").value;
+            pilot.email = document.getElementById("editEmail").value;
+            savePilots();
+            renderPilots();
+            renderPilotSelects();
+            closeEditPilotModal();
+            showToast("Piloto atualizado!");
+        }
+    }
+
+    function deletePilot(id) {
+        if (currentUser.role !== "admin") { alert("Apenas administradores podem excluir pilotos!"); return; }
+        if (confirm("Excluir este piloto?")) {
+            transactions.forEach(t => { if (t.pilotId === id) t.pilotId = "all"; });
+            saveTransactions();
+            pilots = pilots.filter(p => p.id !== id);
+            savePilots();
+            renderPilots();
+            renderPilotSelects();
+            renderTransactions();
+            updateDashboard();
+            updateCategoryChart();
+            showToast("Piloto excluído!");
+        }
+    }
+
+    function renderPilotSelects() {
+        const selects = ["txPilot", "filterPilot", "reportPilot", "dashboardPilotFilter", "editPilot"];
+        selects.forEach(selId => {
+            const sel = document.getElementById(selId);
+            if (!sel) return;
+            const currentValue = sel.value;
+            sel.innerHTML = '<option value="all">Geral (Todos)</option>';
+            pilots.forEach(pilot => { sel.innerHTML += `<option value="${pilot.id}">${pilot.name}</option>`; });
+            if (currentValue && (currentValue === "all" || pilots.some(p => p.id === currentValue))) sel.value = currentValue;
+        });
+        const filterPilot = document.getElementById("filterPilot");
+        if (filterPilot) filterPilot.innerHTML = '<option value="">Todos</option>' + filterPilot.innerHTML;
+    }
+
+    // ==================== LANÇAMENTOS ====================
+    function saveTransaction() {
+        if (currentUser.role !== "admin") { alert("Apenas administradores podem adicionar lançamentos!"); return; }
+        
+        const date = document.getElementById("txDate").value;
+        const desc = document.getElementById("txDesc").value.trim();
+        const value = parseFloat(document.getElementById("txValue").value);
+        
+        if (!date || !desc || isNaN(value) || value <= 0) { alert("Preencha todos os campos obrigatórios!"); return; }
+        
+        const newTransaction = {
+            id: Date.now().toString(),
+            date: date,
+            pilotId: document.getElementById("txPilot").value,
+            description: desc,
+            category: document.getElementById("txCategory").value,
+            type: document.getElementById("txType").value,
+            value: value
+        };
+        
+        transactions.push(newTransaction);
+        saveTransactions();
+        renderTransactions();
+        updateDashboard();
+        updateCategoryChart();
+        
+        document.getElementById("txDesc").value = "";
+        document.getElementById("txValue").value = "";
+        showToast("Lançamento salvo!");
+    }
+
+    function openEditTransactionModal(id) {
+        const trans = transactions.find(t => t.id === id);
+        if (!trans) return;
+        currentEditTransactionId = id;
+        document.getElementById("editDate").value = trans.date;
+        document.getElementById("editPilot").value = trans.pilotId;
+        document.getElementById("editDesc").value = trans.description;
+        document.getElementById("editCategory").value = trans.category;
+        document.getElementById("editType").value = trans.type;
+        document.getElementById("editValue").value = trans.value;
+        document.getElementById("editTransactionModal").style.display = "flex";
+    }
+
+    function closeEditTransactionModal() { document.getElementById("editTransactionModal").style.display = "none"; currentEditTransactionId = null; }
+
+    function saveEditTransaction() {
+        const trans = transactions.find(t => t.id === currentEditTransactionId);
+        if (trans) {
+            trans.date = document.getElementById("editDate").value;
+            trans.pilotId = document.getElementById("editPilot").value;
+            trans.description = document.getElementById("editDesc").value;
+            trans.category = document.getElementById("editCategory").value;
+            trans.type = document.getElementById("editType").value;
+            trans.value = parseFloat(document.getElementById("editValue").value);
+            saveTransactions();
+            renderTransactions();
+            updateDashboard();
+            updateCategoryChart();
+            closeEditTransactionModal();
+            showToast("Lançamento atualizado!");
+        }
+    }
+
+    function deleteTransaction(id) {
+        if (currentUser.role !== "admin") { alert("Apenas administradores podem excluir lançamentos!"); return; }
+        if (confirm("Excluir este lançamento?")) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveTransactions();
+            renderTransactions();
+            updateDashboard();
+            updateCategoryChart();
+            showToast("Lançamento excluído!");
+        }
+    }
+
+    function getPilotName(pilotId) {
+        if (pilotId === "all") return "Geral";
+        const pilot = pilots.find(p => p.id === pilotId);
+        return pilot ? pilot.name : "Desconhecido";
+    }
+
+    function renderTransactions() {
+        let filtered = [...transactions];
+        const start = document.getElementById("filterStart").value;
+        const end = document.getElementById("filterEnd").value;
+        const pilotId = document.getElementById("filterPilot").value;
+        const tipo = document.getElementById("filterType").value;
+        const categoria = document.getElementById("filterCategory").value;
+        
+        if (start) filtered = filtered.filter(t => t.date >= start);
+        if (end) filtered = filtered.filter(t => t.date <= end);
+        if (pilotId) filtered = filtered.filter(t => t.pilotId === pilotId);
+        if (tipo) filtered = filtered.filter(t => t.type === tipo);
+        if (categoria) filtered = filtered.filter(t => t.category === categoria);
+        filtered.sort((a,b) => b.date.localeCompare(a.date));
+        
+        // Cálculo do saldo: Receitas (+) menos Despesas (-)
+        const totalReceitas = filtered.filter(t => t.type === "RECEITA").reduce((sum, t) => sum + t.value, 0);
+        const totalDespesas = filtered.filter(t => t.type === "DESPESA").reduce((sum, t) => sum + t.value, 0);
+        const saldo = totalReceitas - totalDespesas;
+        
+        document.getElementById("totalFiltrado").innerHTML = `💰 Saldo Total: R$ ${saldo.toFixed(2)} (Receitas: R$ ${totalReceitas.toFixed(2)} | Despesas: R$ ${totalDespesas.toFixed(2)})`;
+        
+        const tbody = document.querySelector("#transTable tbody");
+        const isAdmin = currentUser && currentUser.role === "admin";
+        
+        if (tbody) {
+            tbody.innerHTML = '';
+            filtered.forEach(t => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerHTML = t.date.split('-').reverse().join('/');
+                row.insertCell(1).innerHTML = getPilotName(t.pilotId);
+                row.insertCell(2).innerHTML = t.description;
+                row.insertCell(3).innerHTML = t.category;
+                row.insertCell(4).innerHTML = `<span style="color:${t.type === 'RECEITA' ? '#27ae60' : '#c0392b'}">R$ ${t.value.toFixed(2)}</span>`;
+                row.insertCell(5).innerHTML = `<span class="badge ${t.type === 'RECEITA' ? 'badge-receita' : 'badge-despesa'}">${t.type === 'RECEITA' ? 'Receita' : 'Despesa'}</span>`;
+                if (isAdmin) {
+                    row.insertCell(6).innerHTML = `
+                        <button onclick="openEditTransactionModal('${t.id}')" class="btn-warning" style="padding:5px 10px; margin-right:5px;"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteTransaction('${t.id}')" class="btn-danger" style="padding:5px 10px;"><i class="fas fa-trash"></i></button>
+                    `;
+                }
+            });
+        }
+        
+        const recentTbody = document.querySelector("#recentTable tbody");
+        if (recentTbody) {
+            recentTbody.innerHTML = '';
+            filtered.slice(0, 10).forEach(t => {
+                recentTbody.innerHTML += `
+                    <tr>
+                        <td>${t.date.split('-').reverse().join('/')}79
+                        <td>${getPilotName(t.pilotId)}79
+                        <td>${t.description}79
+                        <td>${t.category}79
+                        <td style="color:${t.type === 'RECEITA' ? '#27ae60' : '#c0392b'}">R$ ${t.value.toFixed(2)}79
+                        <td><span class="badge ${t.type === 'RECEITA' ? 'badge-receita' : 'badge-despesa'}">${t.type === 'RECEITA' ? 'Receita' : 'Despesa'}</span>79
+                    `
+                );
+            });
+        }
+    }
+
+    function applyFilters() { renderTransactions(); }
+    
+    function clearFilters() {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0,10);
+        const todayStr = today.toISOString().slice(0,10);
+        document.getElementById("filterStart").value = firstDay;
+        document.getElementById("filterEnd").value = todayStr;
+        document.getElementById("filterPilot").value = "";
+        document.getElementById("filterType").value = "";
+        document.getElementById("filterCategory").value = "";
+        renderTransactions();
+    }
+
+    // ==================== DASHBOARD ====================
+    function updateDashboard() {
+        const year = document.getElementById("yearFilter").value;
+        const pilotFilter = document.getElementById("dashboardPilotFilter").value;
+        
+        let filtered = transactions.filter(t => t.date.startsWith(year));
+        if (pilotFilter !== "all") filtered = filtered.filter(t => t.pilotId === pilotFilter);
+        
+        const receitas = filtered.filter(t => t.type === "RECEITA").reduce((s,t) => s + t.value, 0);
+        const despesas = filtered.filter(t => t.type === "DESPESA").reduce((s,t) => s + t.value, 0);
+        const saldo = receitas - despesas;
+        
+        document.getElementById("totalRevenue").innerHTML = `R$ ${receitas.toFixed(2)}`;
+        document.getElementById("totalExpense").innerHTML = `R$ ${despesas.toFixed(2)}`;
+        document.getElementById("totalBalance").innerHTML = `R$ ${saldo.toFixed(2)}`;
+        
+        const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const receitasMensais = [];
+        const despesasMensais = [];
+        
+        for (let i = 1; i <= 12; i++) {
+            const mes = i.toString().padStart(2, '0');
+            const rec = filtered.filter(t => t.date.substring(5,7) === mes && t.type === "RECEITA").reduce((s,t) => s + t.value, 0);
+            const desp = filtered.filter(t => t.date.substring(5,7) === mes && t.type === "DESPESA").reduce((s,t) => s + t.value, 0);
+            receitasMensais.push(rec);
+            despesasMensais.push(desp);
+        }
+        
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        if (monthlyChart) monthlyChart.destroy();
+        monthlyChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: meses, datasets: [{ label: 'Receitas', data: receitasMensais, backgroundColor: '#27ae60' }, { label: 'Despesas', data: despesasMensais, backgroundColor: '#c0392b' }] },
+            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { callback: v => `R$ ${v}` } } } }
+        });
+    }
+
+    // ==================== RELATÓRIOS ====================
+    function updateCategoryChart() {
+        const start = document.getElementById("reportStart").value;
+        const end = document.getElementById("reportEnd").value;
+        const pilotId = document.getElementById("reportPilot").value;
+        
+        let filtered = [...transactions];
+        if (start) filtered = filtered.filter(t => t.date >= start);
+        if (end) filtered = filtered.filter(t => t.date <= end);
+        if (pilotId !== "all") filtered = filtered.filter(t => t.pilotId === pilotId);
+        
+        const despesasPorCategoria = {};
+        filtered.filter(t => t.type === "DESPESA").forEach(t => { despesasPorCategoria[t.category] = (despesasPorCategoria[t.category] || 0) + t.value; });
+        
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        if (categoryChart) categoryChart.destroy();
+        categoryChart = new Chart(ctx, {
+            type: 'pie',
+            data: { labels: Object.keys(despesasPorCategoria), datasets: [{ data: Object.values(despesasPorCategoria), backgroundColor: ['#27ae60','#2980b9','#f39c12','#e67e22','#c0392b','#3498db'] }] },
+            options: { responsive: true }
+        });
+    }
+
+    // ==================== EXPORTAÇÕES ====================
+    function exportToExcel() {
+        const start = document.getElementById("reportStart").value;
+        const end = document.getElementById("reportEnd").value;
+        const pilotId = document.getElementById("reportPilot").value;
+        
+        let filtered = [...transactions];
+        if (start) filtered = filtered.filter(t => t.date >= start);
+        if (end) filtered = filtered.filter(t => t.date <= end);
+        if (pilotId !== "all") filtered = filtered.filter(t => t.pilotId === pilotId);
+        
+        const data = filtered.map(t => ({ Data: t.date, Piloto: getPilotName(t.pilotId), Descrição: t.description, Categoria: t.category, Tipo: t.type === "RECEITA" ? "Receita" : "Despesa", Valor: t.value }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Lançamentos");
+        XLSX.writeFile(wb, `parapente_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showToast("Exportado para Excel!");
+    }
+
+    function exportToJSON() {
+        const start = document.getElementById("reportStart").value;
+        const end = document.getElementById("reportEnd").value;
+        const pilotId = document.getElementById("reportPilot").value;
+        
+        let filtered = [...transactions];
+        if (start) filtered = filtered.filter(t => t.date >= start);
+        if (end) filtered = filtered.filter(t => t.date <= end);
+        if (pilotId !== "all") filtered = filtered.filter(t => t.pilotId === pilotId);
+        
+        const dataStr = JSON.stringify(filtered, null, 2);
+        const blob = new Blob([dataStr], {type:"application/json"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `parapente_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Exportado para JSON!");
+    }
+
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Tabs
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(tc => tc.classList.remove("active"));
+            btn.classList.add("active");
+            document.getElementById(btn.getAttribute("data-tab")).classList.add("active");
+            if (btn.getAttribute("data-tab") === "dashboard") updateDashboard();
+            if (btn.getAttribute("data-tab") === "reports") updateCategoryChart();
+        });
+    });
+    
+    document.getElementById("reportStart").addEventListener("change", () => updateCategoryChart());
+    document.getElementById("reportEnd").addEventListener("change", () => updateCategoryChart());
+    document.getElementById("reportPilot").addEventListener("change", () => updateCategoryChart());
+</script>
+</body>
+</html>
